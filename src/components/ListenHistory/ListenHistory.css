@@ -1,0 +1,103 @@
+.listen-history {
+  padding: 30px 50px;
+  color: var(--text-primary, #fff);
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  border-bottom: 1px solid var(--player-border, #2f2739);
+  padding-bottom: 20px;
+}
+
+.history-header h2 {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.play-all-btn {
+  background-color: var(--player-primary-color, #9b4de0);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-item {
+  display: grid;
+  grid-template-columns: 1fr 150px; /* (Ảnh + Info) - Thời gian */
+  align-items: center;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.history-item:hover {
+  background-color: var(--sidebar-active-bg, #3a3344);
+}
+
+.history-item-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  overflow: hidden;
+}
+
+.history-item-cover {
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.history-item-info h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: var(--text-primary, #fff);
+}
+
+.history-item-info p {
+  font-size: 12px;
+  margin: 0;
+  color: var(--text-secondary, #a0a0a0);
+}
+
+.history-item-right {
+  text-align: right;
+  color: var(--text-secondary, #a0a0a0);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.no-history {
+  text-align: center;
+  color: var(--text-secondary, #a0a0a0);
+  margin-top: 50px;
+  font-style: italic;
+}

@@ -9,6 +9,7 @@ import {
   IoTimeOutline, // Đã-xóa (Removed)
   IoGridOutline, // Thêm (Added) icon Thể loại
   IoListOutline, // Thêm (Added) icon Danh sách phát
+  
 } from 'react-icons/io5';
 
 // Component-con (Sub-component) cho-mỗi (for each) mục-menu (menu item)
@@ -28,7 +29,7 @@ const SidebarItem = ({ icon, text, to, isActive, onClick }) => {
 
 
 // Component Sidebar chính
-const Sidebar = ({ onLoginClick, isLoggedIn, onViewFavorites, onViewHome }) => {
+const Sidebar = ({ onLoginClick, isLoggedIn, onViewFavorites, onViewHome, onViewHistory, onViewPlaylists }) => {
   const [activeItem, setActiveItem] = useState('kham-pha');
 
   // Hàm xử lý click vào Thư Viện
@@ -41,6 +42,12 @@ const Sidebar = ({ onLoginClick, isLoggedIn, onViewFavorites, onViewHome }) => {
       // === SỬA: Điều hướng khi click ===
       if (itemName === 'yeu-thich') {
         if (onViewFavorites) onViewFavorites();
+      }
+      if (itemName === 'danh-sach-phat') {
+        if (onViewPlaylists) onViewPlaylists();
+      }
+      if (itemName === 'nghe-gan-day') {
+        if (onViewHistory) onViewHistory();
       }
     }
   };
@@ -104,8 +111,8 @@ const Sidebar = ({ onLoginClick, isLoggedIn, onViewFavorites, onViewHome }) => {
               <SidebarItem
                 icon={<IoTimeOutline />}
                 text="Nghe gần đây"
-                isActive={activeItem === 'gan-day'}
-                onClick={() => setActiveItem('gan-day')}
+                isActive={activeItem === 'nghe-gan-day'}
+                onClick={() => handleLibraryClick('nghe-gan-day')}
               />
             </ul>
           </nav>

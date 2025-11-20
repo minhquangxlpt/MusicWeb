@@ -1,0 +1,110 @@
+.add-playlist-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 3000; /* Cao hơn mọi thứ */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.add-playlist-content {
+  background-color: #1a1025;
+  width: 400px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  color: #fff;
+}
+
+.add-playlist-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.add-playlist-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.add-playlist-header button {
+  background: none;
+  border: none;
+  color: #a0a0a0;
+  font-size: 24px;
+  cursor: pointer;
+}
+.add-playlist-header button:hover {
+  color: #fff;
+}
+
+.add-playlist-body {
+  padding: 20px;
+}
+
+.add-playlist-body p {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #a0a0a0;
+}
+
+.add-playlist-body strong {
+  color: #fff;
+}
+
+.playlist-select-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.playlist-select-list li {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.playlist-select-list li:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.playlist-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  margin-right: 10px;
+  color: #fff;
+}
+
+.playlist-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.no-playlist-item {
+  text-align: center;
+  color: #a0a0a0;
+  font-style: italic;
+  padding: 20px;
+}
+
+.loading-text {
+  text-align: center;
+  color: #a0a0a0;
+}

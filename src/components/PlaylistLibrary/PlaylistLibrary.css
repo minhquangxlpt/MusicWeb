@@ -1,0 +1,213 @@
+/* ... (Các style cũ giữ nguyên) ... */
+.playlist-library {
+  padding: 30px 50px;
+  color: var(--text-primary, #fff);
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+}
+
+.playlist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+  border-bottom: 1px solid var(--player-border, #2f2739);
+  padding-bottom: 20px;
+}
+
+.playlist-header h2 {
+  font-size: 32px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.create-playlist-btn {
+  background-color: var(--sidebar-active-bg, #3a3344);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 8px 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.create-playlist-btn:hover {
+  filter: brightness(1.2);
+}
+
+.playlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 30px;
+}
+
+.playlist-card {
+  cursor: pointer;
+}
+
+.playlist-image {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  aspect-ratio: 1/1;
+}
+
+.playlist-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.playlist-card:hover .playlist-image img {
+  transform: scale(1.1);
+}
+
+.playlist-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.playlist-card:hover .playlist-overlay {
+  opacity: 1;
+}
+
+.playlist-overlay .play-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: transparent;
+  border: 1px solid #fff;
+  color: #fff;
+  font-size: 24px;
+}
+.playlist-overlay .play-btn:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+.playlist-info h4 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 5px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.playlist-info p {
+  font-size: 14px;
+  color: var(--text-secondary, #a0a0a0);
+  margin: 0;
+}
+
+.no-playlist {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 50px;
+  color: var(--text-secondary, #a0a0a0);
+  font-style: italic;
+}
+
+/* === STYLE CHO MODAL TẠO PLAYLIST === */
+.create-playlist-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.create-playlist-modal {
+    background-color: #1a1025; /* Nền tối */
+    width: 400px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+
+.create-playlist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+}
+
+.create-playlist-header h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 18px;
+}
+
+.create-playlist-header button {
+    background: none;
+    border: none;
+    color: #a0a0a0;
+    font-size: 24px;
+    cursor: pointer;
+}
+.create-playlist-header button:hover {
+    color: #fff;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #2f2739;
+    background-color: #2f2739;
+    color: #fff;
+    outline: none;
+    box-sizing: border-box; /* Quan trọng để input không bị tràn */
+}
+
+.form-group input:focus {
+    border-color: var(--player-primary-color, #9b4de0);
+}
+
+.create-btn-submit {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--player-primary-color, #9b4de0);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.create-btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.create-btn-submit:hover:not(:disabled) {
+    filter: brightness(1.1);
+}

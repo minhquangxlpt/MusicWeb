@@ -158,26 +158,41 @@ app.post('/api/login', async (req, res) => {
 // Gợi ý
 app.get('/api/suggestions', async (req, res) => {
   try {
+    // Sử dụng LEFT JOIN để đảm bảo không mất bài hát nếu thiếu thông tin phụ
+    // Sử dụng IFNULL thay vì COALESCE (tương tự nhau nhưng IFNULL phổ biến hơn trong MySQL cũ)
     const [rows] = await pool.execute(`
-      SELECT b.BaiHatID as id, b.TieuDe as title, b.AnhBiaBaiHat as imageUrl,
-             GROUP_CONCAT(n.TenNgheSi SEPARATOR ', ') as artists,
-             b.DuongDanAudio as audioUrl
+      SELECT 
+        b.BaiHatID as id, 
+        b.TieuDe as title, 
+        b.AnhBiaBaiHat as imageUrl,
+        GROUP_CONCAT(n.TenNgheSi SEPARATOR ', ') as artists,
+        b.DuongDanAudio as audioUrl,
+        IFNULL(b.LuotPhat, 0) as listenCount, 
+        IFNULL(b.LuotThich, 0) as likeCount
       FROM baihat b
-      JOIN baihat_nghesi bn ON b.BaiHatID = bn.BaiHatID
-      JOIN nghesi n ON bn.NgheSiID = n.NgheSiID
+      LEFT JOIN baihat_nghesi bn ON b.BaiHatID = bn.BaiHatID
+      LEFT JOIN nghesi n ON bn.NgheSiID = n.NgheSiID
       GROUP BY b.BaiHatID
       ORDER BY RAND()
       LIMIT 9
     `);
+
     const data = rows.map(row => ({
-      ...row,
+      id: row.id,
+      title: row.title,
+      artists: row.artists || 'Unknown Artist',
       imageUrl: row.imageUrl ? `${BASE_URL}/api/image/song/${row.imageUrl}` : 'https://placehold.co/300x300/7a3c9e/ffffff?text=No+Image',
-      audioUrl: row.audioUrl ? `${BASE_URL}/api/audio/${row.audioUrl}` : null
+      audioUrl: row.audioUrl ? `${BASE_URL}/api/audio/${row.audioUrl}` : null,
+      listenCount: Number(row.listenCount),
+      likeCount: Number(row.likeCount)
     }));
+    
     res.json(data);
+
   } catch (error) {
     console.error('Error suggestions:', error);
-    res.status(500).json({ error: 'Lỗi server' });
+    // Trả về mảng rỗng thay vì lỗi 500 để frontend không bị crash
+    res.json([]); 
   }
 });
 
@@ -407,6 +422,214 @@ app.get('/api/favorites/:songId/status', authenticateToken, async (req, res) => 
     } catch (error) {
         res.status(500).json({ error: 'Lỗi' });
     }
+});
+
+app.post('/api/playlists', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { name, description } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Tên playlist là bắt buộc' });
+    }
+
+    // SỬA: Cột 'Ten' thay vì 'TenDanhSach'
+    const [result] = await pool.execute(
+      'INSERT INTO danhsachphat (NguoiDungID, Ten, MoTa) VALUES (?, ?, ?)',
+      [userId, name, description || '']
+    );
+
+    res.status(201).json({
+      id: result.insertId,
+      name,
+      description,
+      createdAt: new Date()
+    });
+
+  } catch (error) {
+    console.error('Error creating playlist:', error);
+    res.status(500).json({ error: 'Lỗi server: ' + error.message });
+  }
+});
+
+// 2. Lấy danh sách Playlist của User
+app.get('/api/playlists', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // SỬA: 
+    // - Cột 'Ten' thay vì 'TenDanhSach'
+    // - Bỏ 'AnhBia' vì bảng không có
+    const [rows] = await pool.execute(`
+      SELECT DanhSachID as id, Ten as name, MoTa as description,
+             NgayTao as createdAt
+      FROM danhsachphat
+      WHERE NguoiDungID = ?
+      ORDER BY NgayTao DESC
+    `, [userId]);
+
+    res.json(rows);
+
+  } catch (error) {
+    console.error('Error fetching playlists:', error);
+    res.status(500).json({ error: 'Lỗi server: ' + error.message });
+  }
+});
+
+// 3. Thêm bài hát vào Playlist
+app.post('/api/playlists/:playlistId/songs', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const playlistId = req.params.playlistId;
+    const { songId } = req.body;
+
+    // Kiểm tra quyền sở hữu
+    const [playlist] = await pool.execute(
+      'SELECT * FROM danhsachphat WHERE DanhSachID = ? AND NguoiDungID = ?',
+      [playlistId, userId]
+    );
+
+    if (playlist.length === 0) {
+      return res.status(404).json({ error: 'Playlist không tồn tại hoặc không có quyền' });
+    }
+
+    // Kiểm tra trùng bài
+    const [existing] = await pool.execute(
+      'SELECT * FROM danhsach_baihat WHERE DanhSachID = ? AND BaiHatID = ?',
+      [playlistId, songId]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Bài hát đã có trong playlist' });
+    }
+
+    // Lấy thứ tự
+    const [maxOrder] = await pool.execute(
+      'SELECT MAX(ThuTu) as maxOrder FROM danhsach_baihat WHERE DanhSachID = ?',
+      [playlistId]
+    );
+    const nextOrder = (maxOrder[0].maxOrder || 0) + 1;
+
+    // Thêm bài
+    await pool.execute(
+      'INSERT INTO danhsach_baihat (DanhSachID, BaiHatID, ThuTu) VALUES (?, ?, ?)',
+      [playlistId, songId, nextOrder]
+    );
+
+    res.json({ message: 'Đã thêm bài hát vào playlist' });
+
+  } catch (error) {
+    console.error('Error adding song to playlist:', error);
+    res.status(500).json({ error: 'Lỗi server: ' + error.message });
+  }
+});
+
+// 4. Lấy chi tiết Playlist (SỬA LỖI HIỂN THỊ BÀI HÁT)
+app.get('/api/playlists/:playlistId', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const playlistId = req.params.playlistId;
+
+    // 1. Lấy thông tin Playlist
+    const [playlistRows] = await pool.execute(`
+      SELECT DanhSachID as id, Ten as name, MoTa as description,
+             NgayTao as createdAt
+      FROM danhsachphat
+      WHERE DanhSachID = ? AND NguoiDungID = ?
+    `, [playlistId, userId]);
+
+    if (playlistRows.length === 0) {
+      return res.status(404).json({ error: 'Playlist không tìm thấy hoặc bạn không có quyền truy cập' });
+    }
+    
+    const playlistInfo = playlistRows[0];
+    // Thêm ảnh bìa giả lập (hoặc lấy từ bài hát đầu tiên nếu muốn xịn hơn)
+    playlistInfo.coverImage = 'https://placehold.co/300x300/2f2739/ffffff?text=' + encodeURIComponent(playlistInfo.name);
+
+    // 2. Lấy danh sách bài hát (QUAN TRỌNG)
+    // Join bảng danhsach_baihat -> baihat -> (các bảng nghệ sĩ nếu cần)
+    const [songRows] = await pool.execute(`
+      SELECT b.BaiHatID as id, b.TieuDe as title, b.AnhBiaBaiHat as imageUrl,
+             GROUP_CONCAT(n.TenNgheSi SEPARATOR ', ') as artists,
+             b.DuongDanAudio as audioUrl, db.ThuTu as orderIndex
+      FROM danhsach_baihat db
+      JOIN baihat b ON db.BaiHatID = b.BaiHatID
+      LEFT JOIN baihat_nghesi bn ON b.BaiHatID = bn.BaiHatID
+      LEFT JOIN nghesi n ON bn.NgheSiID = n.NgheSiID
+      WHERE db.DanhSachID = ?
+      GROUP BY b.BaiHatID, db.ThuTu
+      ORDER BY db.ThuTu ASC
+    `, [playlistId]);
+
+    const songs = songRows.map(song => ({
+      ...song,
+      // Xử lý đường dẫn ảnh/nhạc
+      imageUrl: song.imageUrl ? `${BASE_URL}/api/image/song/${song.imageUrl}` : 'https://placehold.co/60x60/7a3c9e/ffffff?text=No+Image',
+      audioUrl: song.audioUrl ? `${BASE_URL}/api/audio/${song.audioUrl}` : null
+    }));
+
+    res.json({
+      ...playlistInfo,
+      songs // Trả về mảng bài hát
+    });
+
+  } catch (error) {
+    console.error('Error playlist detail:', error);
+    res.status(500).json({ error: 'Lỗi server: ' + error.message });
+  }
+});
+
+app.get('/api/history', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const [rows] = await pool.execute(`
+      SELECT b.BaiHatID as id, b.TieuDe as title, b.AnhBiaBaiHat as imageUrl,
+             GROUP_CONCAT(n.TenNgheSi SEPARATOR ', ') as artists,
+             b.DuongDanAudio as audioUrl, h.ThoiGianNghe as playedAt
+      FROM lichsunghe h
+      JOIN baihat b ON h.BaiHatID = b.BaiHatID
+      LEFT JOIN baihat_nghesi bn ON b.BaiHatID = bn.BaiHatID
+      LEFT JOIN nghesi n ON bn.NgheSiID = n.NgheSiID
+      WHERE h.NguoiDungID = ?
+      GROUP BY h.LichSuID
+      ORDER BY h.ThoiGianNghe DESC
+      LIMIT 50
+    `, [userId]);
+
+    const history = rows.map(row => ({
+      ...row,
+      imageUrl: row.imageUrl ? `${BASE_URL}/api/image/song/${row.imageUrl}` : 'https://placehold.co/60x60/7a3c9e/ffffff?text=No+Image',
+      audioUrl: row.audioUrl ? `${BASE_URL}/api/audio/${row.audioUrl}` : null
+    }));
+    res.json(history);
+  } catch (error) {
+    console.error('Error fetching history:', error);
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// API THÊM LỊCH SỬ (SỬA LẠI CHO CHÍNH XÁC)
+app.post('/api/history', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { songId } = req.body;
+
+    if (!songId) {
+        return res.status(400).json({ error: 'Thiếu songId' });
+    }
+
+    // Thêm bản ghi mới vào lịch sử
+    // Lưu ý: Bảng lichsunghe của bạn có LichSuID tự tăng, ThoiGianNghe mặc định là CURRENT_TIMESTAMP
+    await pool.execute(
+      'INSERT INTO lichsunghe (NguoiDungID, BaiHatID) VALUES (?, ?)',
+      [userId, songId]
+    );
+    
+    res.json({ message: 'Đã thêm vào lịch sử' });
+  } catch (error) {
+    console.error('Error adding to history:', error);
+    res.status(500).json({ error: 'Lỗi server' });
+  }
 });
 
 // KHỞI ĐỘNG SERVER

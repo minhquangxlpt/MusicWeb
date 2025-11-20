@@ -9,7 +9,7 @@ import {
   IoMicOutline, IoListOutline,
 } from 'react-icons/io5';
 
-function PlayerControls({ currentSong, onNext, onPrev, onTogglePlaylist, showPlaylistQueue, isFavorite, onToggleFavorite }) {
+function PlayerControls({ currentSong, onNext, onPrev, onTogglePlaylist, showPlaylistQueue, isFavorite, onToggleFavorite, onTimeUpdate }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(80);
@@ -43,6 +43,9 @@ function PlayerControls({ currentSong, onNext, onPrev, onTogglePlaylist, showPla
         const total = newAudio.duration;
         setCurrentTime(current);
         setProgress(total ? (current / total) * 100 : 0);
+        if (onTimeUpdate) {
+            onTimeUpdate(current);
+        }
       });
 
       newAudio.addEventListener('ended', () => {
@@ -170,6 +173,7 @@ function PlayerControls({ currentSong, onNext, onPrev, onTogglePlaylist, showPla
           >
              {isFavorite ? <IoHeart className="heart-active" /> : <IoHeartOutline />}
           </button>
+        
           <button className="player-btn icon-btn">
             <IoEllipsisHorizontal />
           </button>

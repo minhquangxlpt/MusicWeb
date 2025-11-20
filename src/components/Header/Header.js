@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Header.css';
+import UserMenu from '../UserMenu/UserMenu';
+
 import {
     IoArrowBack,
     IoArrowForward,
     IoSearch,
     IoSettings,
-    IoLogOutOutline
 } from 'react-icons/io5';
 
-function Header({ onShowAuthModal, onPlaySong, user, isLoggedIn, onLogout }) {
+function Header({ onShowAuthModal, onPlaySong, user, isLoggedIn, onLogout, onChangePassword, onViewProfile }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [isSearchActive, setIsSearchActive] = useState(false);
@@ -129,34 +130,14 @@ function Header({ onShowAuthModal, onPlaySong, user, isLoggedIn, onLogout }) {
                     </div>
                     
                     <div className="user-setting">
-                        {/* === SỬA: Hiển thị User hoặc Nút Đăng nhập dựa trên isLoggedIn === */}
-                        {isLoggedIn && user ? (
-                             <div className="zm-avatar-frame logged-in" onClick={onLogout} title="Đăng xuất">
-                                <button className="zm-btn button">
-                                    <figure className="image is-38x38 is-rounded">
-                                        <img 
-                                            src={user.avatar || "https://zmdjs.zmdcdn.me/zmp3-desktop/v1.17.3/static/media/user-default.3ff115bb.png"} 
-                                            alt={user.username || "User"} 
-                                        />
-                                    </figure>
-                                </button>
-                             </div>
-                        ) : (
-                            <div className="zm-avatar-frame" style={{ '--circle-color': 'transparent' }}>
-                                <button
-                                    className="zm-btn button"
-                                    tabIndex={0}
-                                    onClick={onShowAuthModal}
-                                >
-                                    <figure className="image is-38x38 is-rounded">
-                                        <img 
-                                            src="https://zmdjs.zmdcdn.me/zmp3-desktop/v1.17.3/static/media/user-default.3ff115bb.png" 
-                                            alt="" 
-                                        />
-                                    </figure>
-                                </button>
-                            </div>
-                        )}
+                        <UserMenu 
+                            user={user}
+                            isLoggedIn={isLoggedIn}
+                            onLogin={onShowAuthModal}
+                            onLogout={onLogout}
+                            onChangePassword={onChangePassword} // Hàm này sẽ được truyền từ App.js
+                            onViewProfile={onViewProfile}
+                        />
                     </div>
                 </div>
             </div>

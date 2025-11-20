@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './MainContent.css'; 
-import { IoChevronForward, IoPlay, IoRefresh } from 'react-icons/io5';
+import { IoChevronForward, IoPlay, IoRefresh, IoEllipsisHorizontal } from 'react-icons/io5'; // Thêm import icon
 
-function MainContent({ onPlaySong, onViewAlbum }) {
+function MainContent({ onPlaySong, onViewAlbum, onOpenSongAction, isLoggedIn, favorites, onToggleFavorite }) {
   const [suggestions, setSuggestions] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [albumData, setAlbumData] = useState([]);
@@ -61,32 +61,51 @@ function MainContent({ onPlaySong, onViewAlbum }) {
             <div
               className="song-item"
               key={item.id}
-              // Click vào cả khối cũng phát nhạc (UX tốt hơn)
-              onClick={() => onPlaySong(item, suggestions)}
+              // Click vào cả khối cũng phát nhạc (UX tốt hơn) - nhưng phải cẩn thận với click vào nút action
+              // Tốt nhất là bỏ click tổng, chỉ click vào ảnh/tên để tránh xung đột với nút action
+              // Hoặc giữ lại và dùng e.stopPropagation() ở nút action (đã làm bên dưới)
+               onClick={() => onPlaySong(item, suggestions)}
             >
               <div className="song-item-left">
-                <img
-                  src={item.imageUrl || 'https://placehold.co/60x60/7a3c9e/ffffff?text=Err'}
-                  alt={item.title}
-                  className="song-item-cover"
-                  onError={(e) => { e.target.src = 'https://placehold.co/60x60/7a3c9e/ffffff?text=Err'; }}
+                <img 
+                    src={item.imageUrl || 'https://placehold.co/60x60/7a3c9e/ffffff?text=Err'} 
+                    alt={item.title} 
+                    className="song-item-cover" 
+                    onError={(e) => { e.target.src = 'https://placehold.co/60x60/7a3c9e/ffffff?text=Err'; }}
                 />
                 <div className="song-item-play-icon">
                   <IoPlay />
                 </div>
               </div>
+              
               <div className="song-item-info">
-                <h4 className="song-title-clickable">
-                  {item.title}
-                </h4>
-                <p>{item.artists}</p>
+                 <h4 className="song-title-clickable">
+                    {item.title}
+                 </h4>
+                 <p>{item.artists}</p>
               </div>
+
+              {/* === SỬA: Thêm khu vực Action (Yêu thích & Tùy chọn) === */}
+              <div className="song-item-actions">
+                <button 
+                    className="action-btn"
+                    onClick={(e) => {
+                        e.stopPropagation(); // Ngăn phát nhạc khi bấm nút này
+                        if (onOpenSongAction) onOpenSongAction(item);
+                    }}
+                    title="Khác"
+                >
+                    <IoEllipsisHorizontal />
+                </button>
+              </div>
+
             </div>
           ))}
         </div>
       </section>
 
       {/* === BẢNG XẾP HẠNG === */}
+      {/* (Giữ nguyên phần này hoặc áp dụng tương tự nếu muốn) */}
       <section className="content-section">
         <div className="section-header">
           <h2>Bảng Xếp Hạng Nhạc</h2>
