@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Header.css';
 import UserMenu from '../UserMenu/UserMenu';
+import SettingsMenu from '../SettingsMenu/SettingsMenu';
 
 import {
     IoArrowBack,
@@ -9,7 +10,7 @@ import {
     IoSettings,
 } from 'react-icons/io5';
 
-function Header({ onShowAuthModal, onPlaySong, user, isLoggedIn, onLogout, onChangePassword, onViewProfile }) {
+function Header({ onShowAuthModal, onPlaySong, user, isLoggedIn, onLogout, onChangePassword, onViewProfile, onUpgradeVip, onViewInvoices }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [isSearchActive, setIsSearchActive] = useState(false);
@@ -114,19 +115,16 @@ function Header({ onShowAuthModal, onPlaySong, user, isLoggedIn, onLogout, onCha
                 </div>
 
                 <div className="level-right">
-                    <a 
+                    <button 
                         className="header-upgrade-vip-button" 
-                        href="https://zingmp3.vn/vip/upgrade?src_vip=114" 
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        onClick={onUpgradeVip}
+                        style={{border: 'none', cursor: 'pointer'}}
                     >
                         Nâng cấp tài khoản
-                    </a>
+                    </button>
                     
                     <div className="setting-item">
-                        <button className="zm-btn zm-tooltip-btn is-hover-circle button" tabIndex={0}>
-                            <IoSettings />
-                        </button>
+                        <SettingsMenu />
                     </div>
                     
                     <div className="user-setting">
@@ -137,6 +135,7 @@ function Header({ onShowAuthModal, onPlaySong, user, isLoggedIn, onLogout, onCha
                             onLogout={onLogout}
                             onChangePassword={onChangePassword} // Hàm này sẽ được truyền từ App.js
                             onViewProfile={onViewProfile}
+                            onViewInvoices={onViewInvoices}
                         />
                     </div>
                 </div>

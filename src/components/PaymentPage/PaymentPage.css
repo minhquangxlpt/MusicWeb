@@ -1,0 +1,344 @@
+.payment-page {
+    /* Chiều cao bằng phần còn lại của màn hình */
+    height: calc(100vh - 70px - 90px); /* Trừ Header & Player */
+    width: 100%;
+    background-color: var(--main-bg, #170f23); 
+    color: var(--text-primary, #fff);
+    box-sizing: border-box;
+    
+    /* SỬA: Dùng flex nhưng KHÔNG căn giữa dọc (align-items: center) để tránh mất phần đầu */
+    display: flex;
+    justify-content: center; /* Chỉ căn giữa ngang */
+    overflow: hidden; /* Cố gắng không hiện thanh cuộn */
+    padding: 10px 20px; /* Padding nhỏ thôi */
+}
+
+.payment-container {
+    width: 100%;
+    max-width: 1100px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.back-btn-payment {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: var(--text-secondary, #a0a0a0);
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 15px; /* Giảm margin */
+    transition: color 0.2s;
+    padding: 0;
+    flex-shrink: 0; /* Không bị co lại */
+}
+.back-btn-payment:hover {
+    color: var(--text-primary, #fff);
+}
+
+.payment-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* Tỉ lệ 2:1 */
+    gap: 20px; /* Giảm gap */
+    height: 100%;
+    overflow: hidden; /* Quan trọng để các cột con tự cuộn */
+}
+
+/* --- Cột Trái: Phương thức thanh toán --- */
+.payment-methods-col {
+    background: var(--sidebar-bg, #231b2e); 
+    border-radius: 12px;
+    padding: 20px; /* Giảm padding */
+    border: 1px solid rgba(255,255,255,0.05); 
+    
+    /* Để cột này có thể cuộn nội bộ nếu quá dài */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; 
+}
+
+.section-title {
+    font-size: 16px; /* Giảm font */
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--text-primary, #fff);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+.methods-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Giảm gap giữa các item */
+    overflow-y: auto; /* CHỈ cuộn phần danh sách này */
+    padding-right: 5px; /* Để chừa chỗ cho scrollbar */
+}
+
+/* Tùy chỉnh thanh cuộn cho methods-list */
+.methods-list::-webkit-scrollbar {
+    width: 4px;
+}
+.methods-list::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.02); 
+}
+.methods-list::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1); 
+    border-radius: 4px;
+}
+
+.method-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px; /* Giảm padding item */
+    border: 1px solid rgba(255,255,255,0.1); 
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: rgba(255,255,255,0.02);
+    flex-shrink: 0; /* Ngăn item bị bóp méo */
+}
+
+.method-item:hover {
+    border-color: var(--player-primary-color, #9b4de0);
+    background-color: rgba(255,255,255,0.05);
+}
+
+.method-item.selected {
+    border-color: var(--player-primary-color, #9b4de0);
+    background-color: rgba(155, 77, 224, 0.1);
+}
+
+.method-radio input {
+    accent-color: var(--player-primary-color, #9b4de0);
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    margin-top: 3px;
+}
+
+.method-content {
+    flex: 1;
+}
+
+.method-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.method-icon {
+    font-size: 20px;
+    color: var(--text-secondary, #a0a0a0);
+    display: flex;
+    align-items: center;
+}
+
+.method-icon.shopee { color: #ee4d2d; }
+.method-icon.momo { 
+    font-size: 10px; 
+    font-weight: bold; 
+    background: #a50064; 
+    color: #fff; 
+    padding: 2px 4px; 
+    border-radius: 4px; 
+}
+.method-icon.zalo { 
+    font-size: 11px; 
+    font-weight: bold; 
+    color: #0068ff; 
+}
+
+.method-name {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-primary, #fff);
+}
+
+.card-icons {
+    margin-left: auto;
+    display: flex;
+    gap: 5px;
+}
+
+.card-logo {
+    font-size: 9px;
+    font-weight: bold;
+    padding: 1px 4px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 3px;
+    color: var(--text-secondary, #a0a0a0);
+    background: rgba(0,0,0,0.2);
+}
+
+/* Chi tiết thẻ tín dụng */
+.method-detail {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary, #a0a0a0);
+    margin-bottom: 5px;
+}
+
+.payment-select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    background-color: #1a1025;
+    color: #fff;
+    font-size: 13px;
+    outline: none;
+}
+.payment-select:focus {
+    border-color: var(--player-primary-color, #9b4de0);
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary, #a0a0a0);
+    cursor: pointer;
+}
+.checkbox-container input {
+    accent-color: var(--player-primary-color, #9b4de0);
+    width: 14px;
+    height: 14px;
+}
+
+/* --- Cột Phải: Thông tin đơn hàng --- */
+.order-info-col {
+    height: 100%; /* Chiều cao full để căn giữa nếu cần */
+}
+
+.order-card {
+    background: var(--sidebar-bg, #231b2e);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+    border: 1px solid rgba(255,255,255,0.05);
+    
+    /* Làm cho card gọn gàng hơn */
+    display: flex;
+    flex-direction: column;
+}
+
+.order-card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--text-primary, #fff);
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+}
+
+.order-desc {
+    font-size: 12px;
+    color: var(--text-secondary, #a0a0a0);
+    margin-bottom: 10px;
+}
+
+.order-package-box {
+    background-color: rgba(255,255,255,0.05);
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.order-package-box .label {
+    font-size: 12px;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+.order-package-box .value {
+    font-weight: 700;
+    color: #fff;
+    font-size: 13px;
+}
+
+.order-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-secondary, #a0a0a0);
+    margin-bottom: 10px;
+}
+
+.order-row .price {
+    font-weight: 600;
+    color: #fff;
+}
+
+.order-divider {
+    height: 1px;
+    background-color: rgba(255,255,255,0.1);
+    margin: 10px 0;
+}
+
+.order-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15px;
+    margin-bottom: 20px;
+}
+
+.order-total span {
+    color: #fff;
+    font-weight: 600;
+}
+
+.order-total .total-price {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--player-primary-color, #9b4de0);
+}
+
+.btn-checkout {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(90deg, #ffc107, #ff9800); 
+    color: #fff;
+    border: none;
+    border-radius: 99px;
+    font-size: 15px;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+.btn-checkout:hover {
+    transform: scale(1.02);
+    filter: brightness(1.1);
+}
+
+/* --- RESPONSIVE --- */
+/* Nếu màn hình quá nhỏ (laptop nhỏ), tự động scale nhỏ lại */
+@media (max-height: 800px) {
+    .payment-container {
+        transform: scale(0.9);
+        transform-origin: top center;
+        height: 110%; /* Bù lại chiều cao khi scale */
+    }
+}

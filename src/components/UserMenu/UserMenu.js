@@ -6,11 +6,12 @@ import {
   IoKeyOutline, 
   IoPersonOutline,
   IoLogInOutline,
-  IoPersonAddOutline
+  IoPersonAddOutline,
+  IoReceiptOutline
 } from 'react-icons/io5';
 
 // === SỬA: Đã thêm 'onChangePassword' vào danh sách props ===
-function UserMenu({ user, isLoggedIn, onLogin, onLogout, onChangePassword, onViewProfile }) {
+function UserMenu({ user, isLoggedIn, onLogin, onLogout, onChangePassword, onViewProfile, onViewInvoices }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -68,6 +69,10 @@ function UserMenu({ user, isLoggedIn, onLogin, onLogout, onChangePassword, onVie
                 <IoPersonOutline /> Thông tin tài khoản
               </button>
               
+              <button className="menu-item" onClick={() => { setIsOpen(false); onViewInvoices(); }}>
+                <IoReceiptOutline /> Lịch sử giao dịch
+              </button>
+
               {/* Nút Đổi mật khẩu sẽ hoạt động vì prop đã được nhận */}
               <button className="menu-item" onClick={() => { setIsOpen(false); onChangePassword(); }}>
                 <IoKeyOutline /> Đổi mật khẩu

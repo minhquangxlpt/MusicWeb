@@ -1,0 +1,149 @@
+.invoice-detail-page {
+    padding: 30px 50px;
+    color: #fff;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.invoice-loading {
+    text-align: center;
+    margin-top: 50px;
+    color: #a0a0a0;
+}
+
+.back-btn {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    color: #a0a0a0;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+.back-btn:hover { color: #fff; }
+
+.invoice-card {
+    background: #231b2e;
+    width: 100%;
+    max-width: 600px;
+    border-radius: 12px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.invoice-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.invoice-card-header h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    color: #fff;
+}
+
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+.status-badge.paid, .status-badge.completed {
+    background-color: rgba(76, 175, 80, 0.15);
+    color: #4caf50;
+}
+.status-badge.pending {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: #ffc107;
+}
+
+.invoice-section {
+    margin-bottom: 20px;
+}
+
+.invoice-label {
+    font-size: 13px;
+    color: #a0a0a0;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.invoice-value {
+    font-size: 16px;
+    color: #fff;
+    font-weight: 500;
+}
+
+.invoice-divider {
+    height: 1px;
+    background-color: rgba(255,255,255,0.1);
+    margin: 20px 0;
+}
+
+.invoice-items {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.item-desc {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+}
+.item-sub {
+    font-size: 13px;
+    color: #a0a0a0;
+}
+
+.item-price {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.invoice-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.invoice-total-row span:first-child {
+    font-size: 16px;
+    color: #fff;
+}
+
+.total-amount {
+    font-size: 24px;
+    font-weight: 800;
+    color: #9b4de0;
+}

@@ -1,0 +1,104 @@
+.invoice-history-container {
+    padding: 30px 50px;
+    color: #fff;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+}
+
+.invoice-header {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+}
+
+.invoice-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.invoice-loading, .no-invoices {
+    text-align: center;
+    color: #a0a0a0;
+    margin-top: 50px;
+    font-size: 16px;
+}
+
+.invoice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.invoice-item {
+    display: flex;
+    align-items: center;
+    background-color: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.invoice-item:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.invoice-icon {
+    font-size: 24px;
+    color: #a0a0a0;
+    margin-right: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.invoice-info {
+    flex: 1;
+}
+
+.invoice-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.invoice-date {
+    font-size: 13px;
+    color: #a0a0a0;
+}
+
+.invoice-right {
+    text-align: right;
+    margin-right: 20px;
+}
+
+.invoice-amount {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.invoice-status {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.invoice-status.paid, .invoice-status.completed {
+    color: #4caf50; /* Xanh lá */
+}
+.invoice-status.pending {
+    color: #ffc107; /* Vàng */
+}
+.invoice-status.failed {
+    color: #f44336; /* Đỏ */
+}
+
+.invoice-arrow {
+    color: #a0a0a0;
+    font-size: 20px;
+}

@@ -632,6 +632,295 @@ app.post('/api/history', authenticateToken, async (req, res) => {
   }
 });
 
+// =======================================================
+// 5. API QUẢNG CÁO & KIỂM TRA QUYỀN (MỚI)
+// =======================================================
+// API Kiểm tra trạng thái gói cước (Đã nâng cấp)
+app.get('/api/user/subscription', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Tìm gói cước đang active và còn hạn
+    const [rows] = await pool.execute(`
+      SELECT dk.DangKyID, dk.NgayHetHan, g.Ten as TenGoi, q.KhongQuangCao
+      FROM dangkygoi dk
+      JOIN goicuoc g ON dk.GoiID = g.GoiID
+      JOIN quyentruycap q ON g.QuyenID = q.QuyenID
+      WHERE dk.NguoiDungID = ?
+        AND dk.TrangThai = 'active'
+        AND (dk.NgayHetHan IS NULL OR dk.NgayHetHan > NOW())
+      ORDER BY dk.NgayHetHan DESC
+      LIMIT 1
+    `, [userId]);
+
+    if (rows.length > 0) {
+        const sub = rows[0];
+        // Tính số ngày còn lại
+        const now = new Date();
+        const expiryDate = new Date(sub.NgayHetHan);
+        const diffTime = Math.abs(expiryDate - now);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+        // Logic hiển thị tên gói
+        let displayName = sub.TenGoi;
+        // Nếu là gói VIP (có quyền KhongQuangCao), bạn có thể đổi tên hiển thị thành "Premium" nếu muốn
+        if (sub.KhongQuangCao === 1) {
+            displayName = "Premium"; 
+        }
+
+        res.json({
+            isVip: sub.KhongQuangCao === 1,
+            planName: displayName, // Trả về tên đã xử lý
+            expiryDate: sub.NgayHetHan,
+            daysLeft: diffDays
+        });
+    } else {
+        // Không có gói nào
+        res.json({
+            isVip: false,
+            planName: 'Miễn Phí',
+            expiryDate: null,
+            daysLeft: 0
+        });
+    }
+
+  } catch (error) {
+    console.error('Error checking subscription:', error);
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+// API Kiểm tra quyền "Không Quảng Cáo"
+app.get('/api/user/check-ads', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Tìm xem user có gói cước nào active và có quyền KhongQuangCao = 1
+    const [rows] = await pool.execute(`
+      SELECT dk.DangKyID
+      FROM dangkygoi dk
+      JOIN goicuoc g ON dk.GoiID = g.GoiID
+      JOIN quyentruycap q ON g.QuyenID = q.QuyenID
+      WHERE dk.NguoiDungID = ?
+        AND dk.TrangThai = 'active'
+        AND (dk.NgayHetHan IS NULL OR dk.NgayHetHan > NOW())
+        AND q.KhongQuangCao = 1
+      LIMIT 1
+    `, [userId]);
+
+    const isVip = rows.length > 0;
+    // Log để debug
+    console.log(`Check VIP User ${userId}: ${isVip}`); 
+
+    res.json({ isVip });
+
+  } catch (error) {
+    console.error('Error checking ads permission:', error);
+    // Nếu lỗi, trả về false để an toàn (hoặc true nếu muốn tránh làm phiền user khi lỗi)
+    res.json({ isVip: false });
+  }
+});
+
+// API Lấy link quảng cáo
+app.get('/api/ads/random', async (req, res) => {
+  try {
+    // Đảm bảo bảng quangcao có dữ liệu HienThi = 1
+    const [rows] = await pool.execute(
+      'SELECT LinkShopee FROM quangcao WHERE HienThi = 1 ORDER BY RAND() LIMIT 1'
+    );
+
+    if (rows.length > 0) {
+      console.log('Ad found:', rows[0].LinkShopee); // Log debug
+      res.json({ link: rows[0].LinkShopee });
+    } else {
+      console.log('No ads found in DB, using fallback'); // Log debug
+      // Link dự phòng nếu DB trống
+      res.json({ link: 'https://shopee.vn' }); 
+    }
+  } catch (error) {
+    console.error('Error getting ad:', error);
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+// API GÓI CƯỚC & THANH TOÁN (VIP)
+// =======================================================
+
+// 1. Lấy danh sách gói cước VIP để hiển thị
+app.get('/api/vip-packages', async (req, res) => {
+  try {
+    // Giả sử QuyenID = 2 là quyền VIP (như trong dữ liệu mẫu của bạn)
+    const [rows] = await pool.execute(`
+      SELECT GoiID as id, Ten as name, Gia as price, ThoiHan as duration, MoTa as description
+      FROM goicuoc
+      WHERE QuyenID = 2  -- Chỉ lấy gói VIP
+      ORDER BY Gia ASC
+    `);
+
+    // Format lại dữ liệu cho đẹp nếu cần
+    const packages = rows.map(pkg => ({
+        ...pkg,
+        formattedPrice: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(pkg.price),
+        features: [ // Tạm thời hardcode các tính năng hiển thị, hoặc bạn có thể thêm bảng 'tinhnang_goi' sau này
+            "Nghe nhạc chất lượng Lossless",
+            "Không quảng cáo làm phiền",
+            "Tải nhạc không giới hạn"
+        ],
+        isRecommended: pkg.duration === 180 // Ví dụ: Gói 6 tháng là recommended
+    }));
+
+    res.json(packages);
+
+  } catch (error) {
+    console.error('Error fetching vip packages:', error);
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// 2. Xử lý Thanh Toán & Đăng Ký Gói (Cập nhật logic chuẩn chỉnh)
+// API THANH TOÁN & ĐĂNG KÝ GÓI VIP (ĐÃ SỬA LỖI NGÀY HẾT HẠN)
+app.post('/api/payment/process', authenticateToken, async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction(); 
+
+    const userId = req.user.userId;
+    const { packageId, packageName, paymentMethod, price } = req.body; // Thêm price nếu cần
+
+    // 1. Lấy thông tin gói cước từ DB
+    const [packages] = await connection.execute('SELECT * FROM goicuoc WHERE GoiID = ?', [packageId]);
+    if (packages.length === 0) {
+        throw new Error("Gói cước không tồn tại");
+    }
+    const selectedPackage = packages[0];
+    const amount = selectedPackage.Gia;
+    const durationDays = selectedPackage.ThoiHan;
+
+    // 2. Tạo Hóa Đơn
+    const [billResult] = await connection.execute(
+      'INSERT INTO hoadon (NguoiDungID, TongTien, TrangThai, NgayLap) VALUES (?, ?, ?, NOW())',
+      [userId, amount, 'paid']
+    );
+    const billId = billResult.insertId;
+
+    // 3. Tạo Chi Tiết Hóa Đơn
+    await connection.execute(
+      'INSERT INTO chitiethoadon (HoaDonID, GoiID, SoTien, MoTa) VALUES (?, ?, ?, ?)',
+      [billId, selectedPackage.GoiID, amount, `Đăng ký ${selectedPackage.Ten} qua ${paymentMethod}`]
+    );
+
+    // 4. Xử lý Đăng Ký Gói (SỬA LỖI LOGIC Ở ĐÂY)
+    
+    // Kiểm tra xem user đang có gói nào CÒN HẠN không (active và chưa hết hạn)
+    const [existingSub] = await connection.execute(
+      "SELECT * FROM dangkygoi WHERE NguoiDungID = ? AND TrangThai = 'active' AND NgayHetHan > NOW() ORDER BY NgayHetHan DESC LIMIT 1",
+      [userId]
+    );
+
+    let newStartDate = new Date();
+    let newEndDate = new Date();
+
+    if (existingSub.length > 0) {
+        // TRƯỜNG HỢP 1: Đang có gói còn hạn -> Cộng dồn thời gian
+        // Lấy ngày hết hạn hiện tại làm mốc bắt đầu cộng thêm
+        const currentEndDate = new Date(existingSub[0].NgayHetHan);
+        
+        // Logic cộng ngày an toàn:
+        newEndDate = new Date(currentEndDate.getTime() + durationDays * 24 * 60 * 60 * 1000);
+        
+        console.log(`User ${userId} gia hạn thêm ${durationDays} ngày. Hết hạn cũ: ${currentEndDate.toISOString()}, Mới: ${newEndDate.toISOString()}`);
+        
+        // Tùy chọn: Có thể update gói cũ thành 'extended' hoặc chỉ đơn giản là insert gói mới nối tiếp
+        // Ở đây ta chọn insert gói mới để lưu lịch sử rõ ràng
+    } else {
+        // TRƯỜNG HỢP 2: Chưa có gói hoặc gói cũ đã hết hạn -> Tính từ thời điểm hiện tại (NOW)
+        // newStartDate là NOW()
+        newEndDate = new Date();
+        newEndDate.setDate(newEndDate.getDate() + durationDays);
+        
+        console.log(`User ${userId} đăng ký mới ${durationDays} ngày. Hết hạn: ${newEndDate.toISOString()}`);
+    }
+
+    // Chuyển đổi ngày sang format MySQL (YYYY-MM-DD HH:mm:ss) để tránh lỗi format
+    const formatDateMySQL = (date) => date.toISOString().slice(0, 19).replace('T', ' ');
+    
+    // Insert bản ghi đăng ký mới
+    await connection.execute(
+      'INSERT INTO dangkygoi (NguoiDungID, GoiID, NgayDangKy, NgayHetHan, TrangThai) VALUES (?, ?, NOW(), ?, ?)',
+      [userId, selectedPackage.GoiID, formatDateMySQL(newEndDate), 'active'] 
+    );
+
+    // (Tùy chọn) Nếu bạn có cột QuyenID trong bảng NguoiDung (để cache quyền), hãy update nó ở đây
+    // Nhưng theo database chuẩn hóa, quyền được check qua bảng dangkygoi -> goicuoc -> quyentruycap
+    // Nên không cần update bảng NguoiDung.
+
+    await connection.commit(); 
+    res.json({ success: true, message: 'Thanh toán thành công! Bạn đã là thành viên VIP.' });
+
+  } catch (error) {
+    await connection.rollback();
+    console.error('Payment Error:', error);
+    res.status(500).json({ error: error.message || 'Lỗi xử lý thanh toán' });
+  } finally {
+    connection.release();
+  }
+});
+
+// API LẤY DANH SÁCH HÓA ĐƠN CỦA USER
+app.get('/api/invoices', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    // Lấy danh sách hóa đơn, sắp xếp mới nhất trước
+    const [rows] = await pool.execute(`
+      SELECT HoaDonID as id, NgayLap as date, TongTien as totalAmount, TrangThai as status
+      FROM hoadon
+      WHERE NguoiDungID = ?
+      ORDER BY NgayLap DESC
+    `, [userId]);
+
+    // Format lại dữ liệu nếu cần (ví dụ format tiền tệ ở frontend hoặc ở đây)
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching invoices:', error);
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+// API LẤY CHI TIẾT HÓA ĐƠN
+app.get('/api/invoices/:id', authenticateToken, async (req, res) => {
+  try {
+    const invoiceId = req.params.id;
+    const userId = req.user.userId;
+
+    // 1. Lấy thông tin chung hóa đơn (đảm bảo đúng chủ sở hữu)
+    const [invoiceRows] = await pool.execute(`
+      SELECT HoaDonID as id, NgayLap as date, TongTien as totalAmount, TrangThai as status
+      FROM hoadon
+      WHERE HoaDonID = ? AND NguoiDungID = ?
+    `, [invoiceId, userId]);
+
+    if (invoiceRows.length === 0) {
+      return res.status(404).json({ error: 'Hóa đơn không tồn tại hoặc không có quyền truy cập' });
+    }
+    const invoice = invoiceRows[0];
+
+    // 2. Lấy chi tiết hóa đơn (items)
+    // Join với bảng goicuoc để lấy tên gói (nếu cần)
+    const [detailRows] = await pool.execute(`
+      SELECT c.ChiTietID as id, c.SoTien as amount, c.MoTa as description, 
+             g.Ten as packageName
+      FROM chitiethoadon c
+      LEFT JOIN goicuoc g ON c.GoiID = g.GoiID
+      WHERE c.HoaDonID = ?
+    `, [invoiceId]);
+
+    res.json({ ...invoice, items: detailRows });
+
+  } catch (error) {
+    console.error('Error fetching invoice detail:', error);
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
 // KHỞI ĐỘNG SERVER
 app.listen(PORT, () => {
   console.log(`✅ Server đang chạy tại: ${BASE_URL}`);
