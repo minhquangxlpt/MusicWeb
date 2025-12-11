@@ -32,12 +32,7 @@ function AdminLayout({ children, onNavigate, currentView, onLogout }) {
             >
               <IoMusicalNotesOutline /> Quản Lý Bài Hát
             </li>
-            <li 
-              className={currentView === 'albums' ? 'active' : ''}
-              onClick={() => onNavigate('albums')}
-            >
-              <IoAlbumsOutline /> Quản Lý Album
-            </li>
+            
             <li 
               className={currentView === 'users' ? 'active' : ''}
               onClick={() => onNavigate('users')}

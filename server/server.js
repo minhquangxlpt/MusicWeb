@@ -10,7 +10,8 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 const JWT_SECRET = 'your-secret-key-123'; // Nên đặt trong biến môi trường
 const BASE_URL = `http://localhost:${PORT}`;
-
+const multer = require('multer'); // Import multer
+const fs = require('fs');
 
 
 app.use(cors());
@@ -20,6 +21,47 @@ app.use(express.json());
 // 1. CÁC TUYẾN ĐƯỜNG PHỤC VỤ FILE (STATIC FILES)
 // =======================================================
 app.use('/uploads', express.static(path.join(__dirname, '../public')));
+
+
+// Hàm helper phục vụ file (QUAN TRỌNG: Phải khai báo ở đây)
+const serveFile = (res, filePath) => {
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            // console.error(`Error sending file: ${filePath}`, err);
+            res.status(404).send('File not found');
+        }
+    });
+};
+
+// Cấu hình Multer để upload Avatar
+const avatarUploadDir = path.join(__dirname, 'uploads', 'images', 'avatar');
+if (!fs.existsSync(avatarUploadDir)) {
+    fs.mkdirSync(avatarUploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, avatarUploadDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, 'avatar-' + uniqueSuffix + ext);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Chỉ chấp nhận file ảnh!'));
+        }
+    }
+});
+
 
 // 1. MIDDLEWARE XÁC THỰC (KHAI BÁO TRƯỚC KHI DÙNG)
 // =======================================================
@@ -39,6 +81,8 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+
+
 
 app.use('/api/admin', authenticateToken, adminRoutes);
 
@@ -94,6 +138,13 @@ app.get('/api/image/album/:filename', (req, res) => {
     }
   });
 });
+
+// Ảnh Avatar (API phục vụ file avatar)
+app.get('/api/image/avatar/:filename', (req, res) => {
+    const filePath = path.join(__dirname, 'uploads', 'images', 'avatar', req.params.filename);
+    serveFile(res, filePath);
+});
+
 // =======================================================
 
 
@@ -961,6 +1012,44 @@ app.get('/api/invoices/:id', authenticateToken, async (req, res) => {
     console.error('Error fetching invoice detail:', error);
     res.status(500).json({ error: 'Lỗi server' });
   }
+});
+
+// Upload Avatar
+app.post('/api/user/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const file = req.file;
+
+        if (!file) {
+            return res.status(400).json({ error: 'Vui lòng chọn file ảnh' });
+        }
+
+        // Lưu đường dẫn tương đối vào DB
+        // Frontend sẽ gọi GET /api/image/avatar/:filename
+        const dbPath = `images/avatar/${file.filename}`;
+        
+        // Hoặc lưu tên file thôi nếu bạn muốn API trả về URL đầy đủ sau này
+        // Ở đây ta lưu đường dẫn tương đối để dễ quản lý
+        
+        await pool.execute(
+            'UPDATE nguoidung SET AnhDaiDien = ? WHERE NguoiDungID = ?',
+            [dbPath, userId]
+        );
+
+        // Trả về URL đầy đủ để hiển thị ngay
+        // Lưu ý: api/image/avatar/:filename phải map đúng với dbPath
+        // dbPath đang là "images/avatar/xyz.jpg", ta cần lấy tên file "xyz.jpg" để ghép vào URL API
+        const avatarUrl = `${BASE_URL}/api/image/avatar/${file.filename}`;
+
+        res.json({ 
+            message: 'Cập nhật ảnh đại diện thành công', 
+            avatarUrl: avatarUrl 
+        });
+
+    } catch (error) {
+        console.error('Upload avatar error:', error);
+        res.status(500).json({ error: 'Lỗi khi upload ảnh' });
+    }
 });
 
 // KHỞI ĐỘNG SERVER

@@ -243,6 +243,7 @@ function App() {
     }
   }, [isLoggedIn]);
 
+
   // 2. Xử lý phát nhạc
   const handlePlaySong = useCallback((song, songList = []) => {
     // Reset trạng thái lịch sử khi chọn bài mới
@@ -328,6 +329,15 @@ function App() {
 
   const handleCloseAuthModal = useCallback(() => {
     setShowAuthModal(false);
+  }, []);
+
+const handleUpdateUser = useCallback((updatedUserData) => {
+      // Cập nhật state
+      setUser(prev => ({ ...prev, ...updatedUserData }));
+      // Cập nhật localStorage
+      const currentUser = JSON.parse(localStorage.getItem('user'));
+      const newUser = { ...currentUser, ...updatedUserData };
+      localStorage.setItem('user', JSON.stringify(newUser));
   }, []);
 
  const handleLoginSuccess = useCallback((userData) => {
@@ -586,7 +596,10 @@ function App() {
             />
         )}
         {currentView === 'profile' && (
-          <UserProfile user={user} />
+          <UserProfile 
+              user={user} 
+              onUpdateUser={handleUpdateUser} // Truyền hàm này xuống
+          />
         )}
         
       </main>

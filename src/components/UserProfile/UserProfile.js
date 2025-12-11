@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Thêm useRef
 import './UserProfile.css';
 import { IoPersonCircleOutline, IoCameraOutline, IoMusicalNotes, IoHeart, IoDiamond, IoTimeOutline } from 'react-icons/io5';
 
@@ -6,36 +6,28 @@ function UserProfile({ user }) {
   const [stats, setStats] = useState({
     playlists: 0,
     favorites: 0,
-    // Thông tin gói cước
     isVip: false,
     planName: 'Đang tải...',
     expiryDate: null,
     daysLeft: 0
   });
 
+  // Ref cho input file
+  const fileInputRef = useRef(null);
+
   useEffect(() => {
     if (user) {
+      // ... (giữ nguyên logic fetch stats cũ)
       const fetchUserData = async () => {
         try {
            const token = localStorage.getItem('token');
            if (!token) return;
 
-           // 1. Lấy thông tin Gói cước
-           const subRes = await fetch('http://localhost:5001/api/user/subscription', {
-             headers: { 'Authorization': `Bearer ${token}` }
-           });
+           const subRes = await fetch('http://localhost:5001/api/user/subscription', { headers: { 'Authorization': `Bearer ${token}` } });
            const subData = await subRes.json();
-
-           // 2. Get Playlists count
-           const playlistRes = await fetch('http://localhost:5001/api/playlists', {
-            headers: { 'Authorization': `Bearer ${token}` }
-           });
+           const playlistRes = await fetch('http://localhost:5001/api/playlists', { headers: { 'Authorization': `Bearer ${token}` } });
            const playlistData = await playlistRes.json();
-
-           // 3. Get Favorites count
-           const favRes = await fetch('http://localhost:5001/api/favorites', {
-            headers: { 'Authorization': `Bearer ${token}` }
-           });
+           const favRes = await fetch('http://localhost:5001/api/favorites', { headers: { 'Authorization': `Bearer ${token}` } });
            const favData = await favRes.json();
 
            setStats({
@@ -55,6 +47,63 @@ function UserProfile({ user }) {
     }
   }, [user]);
 
+  // Hàm xử lý khi click vào nút Camera -> Kích hoạt input file
+  const handleCameraClick = () => {
+    fileInputRef.current.click();
+  };
+
+  // Hàm xử lý khi người dùng chọn file
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate loại file (chỉ ảnh)
+    if (!file.type.startsWith('image/')) {
+        alert("Vui lòng chọn file ảnh!");
+        return;
+    }
+
+    // Tạo FormData để gửi file
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5001/api/user/avatar', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+                // Lưu ý: Không set Content-Type khi dùng FormData, browser tự làm việc đó
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("Cập nhật ảnh đại diện thành công!");
+            // Cập nhật lại user trong localStorage và state của App (cần reload hoặc callback)
+            // Cách đơn giản nhất để cập nhật toàn bộ App là reload lại trang
+            // Hoặc tốt hơn là gọi một hàm update user từ props (nếu có)
+            
+            // Cập nhật tạm thời localStorage để giữ data mới
+            const currentUser = JSON.parse(localStorage.getItem('user'));
+            if (currentUser) {
+                currentUser.avatar = data.avatarUrl;
+                localStorage.setItem('user', JSON.stringify(currentUser));
+            }
+            
+            window.location.reload(); // Reload để cập nhật avatar ở Header và Sidebar
+        } else {
+            alert(data.error || "Lỗi khi upload ảnh");
+        }
+    } catch (error) {
+        console.error("Upload error:", error);
+        alert("Lỗi kết nối server");
+    }
+  };
+
+  // ... (giữ nguyên formatDate)
   const formatDate = (dateString) => {
       if (!dateString) return '';
       return new Date(dateString).toLocaleDateString('vi-VN');
@@ -76,17 +125,25 @@ function UserProfile({ user }) {
               alt={user.displayName} 
               className="profile-avatar"
             />
-            <button className="change-avatar-btn" title="Đổi ảnh đại diện">
+            
+            {/* Input file ẩn */}
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                style={{display: 'none'}} 
+                accept="image/*"
+                onChange={handleFileChange}
+            />
+
+            {/* Nút Camera kích hoạt input file */}
+            <button className="change-avatar-btn" title="Đổi ảnh đại diện" onClick={handleCameraClick}>
               <IoCameraOutline />
             </button>
           </div>
-          
-          {/* Tên người dùng */}
           <h3 className="profile-name">
             {user.displayName || user.username}
           </h3>
-
-          {/* === SỬA: Đưa VIP tag xuống đây và style lại === */}
+          
           {stats.isVip && (
             <div className="vip-badge-profile">
                 <IoDiamond className="diamond-icon"/> <span>VIP</span>
@@ -94,7 +151,8 @@ function UserProfile({ user }) {
           )}
         </div>
 
-        <div className="profile-stats-bar">
+        {/* ... (Các phần còn lại giữ nguyên) ... */}
+         <div className="profile-stats-bar">
             <div className="stat-box">
                 <span className="stat-value">{stats.playlists}</span>
                 <span className="stat-label"><IoMusicalNotes /> Playlist</span>
